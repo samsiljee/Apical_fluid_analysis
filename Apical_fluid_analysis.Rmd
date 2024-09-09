@@ -1,0 +1,38 @@
+# Script to process images and analyse them for apical fluid volume
+# Sam Siljee
+# 6th September 2024
+
+---
+  title: "Apical fluid analysis"
+author: "Sam Siljee"
+date: '2022-09-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr) # Piping and data manipulation
+library(ggplot2) # plotting
+library(magick) # laod images with support for .tif files
+```
+
+# Load data
+```{r Load data}
+image <- image_read("test_image.tif")
+```
+
+
+# Convert to grey-scale image
+
+# Extract rows of pixel values
+
+# Align rows to give a single vector for the image
+
+# Trim off area corresponding to the transwell wall
+
+# Subtract background by using minimal intenstiy values
+
+# Model curve
+
+# calculate area under the curve
