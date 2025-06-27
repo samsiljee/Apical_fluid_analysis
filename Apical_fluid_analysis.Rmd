@@ -12,14 +12,38 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(dplyr) # Piping and data manipulation
-library(ggplot2) # plotting
-library(magick) # laod images with support for .tif files
+# Packages
+library(dplyr) # Data manipulation
+library(ggplot2) # Plotting
+library(stringr) # String manipulation in annotations
+library(tiff) # Read in .tiff files
+
+# Files and directories
+input_dir <- paste0(getwd(), "/data/")
+output_dir <- paste0(getwd(), "/results/")
+annotations_file <- "annotations.tsv"
+
+# User variables
+max_x_offset <- 20
+magnification <- "4x" # "10X"
+wash <- "post wash" # "pre wash"
 ```
 
 # Load data
 ```{r Load data}
-image <- image_read("test_image.tif")
+input_files <- list.files(input_dir) %>%
+  grep(pattern = ".tif$", value = TRUE) %>%
+  grep(pattern = magnification, value = TRUE) %>%
+  grep(pattern = wash, value = TRUE)
+
+data.frame(file_name = input_files) %>%
+  mutate(ID = paste(str_replace(substr(file_name, start = 1, stop = 6), "-", "_"), "well_here", sep = "_"))
+
+# Read in annotations
+annotations <- read.delim(paste0(input_dir, annotations_file))
+
+# Load functions
+source("Functions.R")
 ```
 
 
