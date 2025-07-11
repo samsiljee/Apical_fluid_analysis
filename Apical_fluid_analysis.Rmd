@@ -3,7 +3,7 @@
 # 6th September 2024
 
 ---
-  title: "Apical fluid analysis"
+title: "Apical fluid analysis"
 author: "Sam Siljee"
 date: '2022-09-06'
 output: html_document
@@ -24,39 +24,67 @@ output_dir <- paste0(getwd(), "/results/")
 annotations_file <- "annotations.tsv"
 
 # User variables
-max_x_offset <- 20
+max_x_offset <- 80
 magnification <- "4x" # "10X"
 wash <- "post wash" # "pre wash"
+
+# Load custom functions
+source("Functions.R")
 ```
 
-# Load data
-```{r Load data}
+# Apical fluid analysis
+Run main loop processing the data, iterating over each image
+```{r Run processing}
+# List input files filtering using the variables from setup
 input_files <- list.files(input_dir) %>%
   grep(pattern = ".tif$", value = TRUE) %>%
   grep(pattern = magnification, value = TRUE) %>%
   grep(pattern = wash, value = TRUE)
 
-data.frame(file_name = input_files) %>%
-  mutate(ID = paste(str_replace(substr(file_name, start = 1, stop = 6), "-", "_"), "well_here", sep = "_"))
+# Create annotations from file names
+annotations <- data.frame(file_name = input_files) %>%
+  mutate(
+    Donor = substr(file_name, start = 1, stop = 6),
+    Well = str_extract(file_name, "(?<=well )\\d(?= )"),
+    Rotation = str_extract(file_name, "(?<= wash )\\d{2,3}(?= well )"),
+    ID = paste(Donor, Well, Rotation, sep = "_"),
+    Condition = ifelse(Well %in% c(1, 2, 3), "Control", "p53 KD")
+  )
 
-# Read in annotations
-annotations <- read.delim(paste0(input_dir, annotations_file))
+# Initialise list for results
+area_results <- list()
 
-# Load functions
-source("Functions.R")
+# Start loop through images
+for (i in 1:nrow(annotations)) {
+  # Set some variables
+  file_name <- annotations$file_name[i]
+  ID <- annotations$ID[i]
+
+  # Load the image
+  image_matrix <- readTIFF(paste0(input_dir, file_name), as.is = TRUE)
+
+  # Convert to grey-scale image - sum all channels
+  image_matrix <- image_matrix[, , 1] + image_matrix[, , 2] + image_matrix[, , 3]
+
+  # Flip on vertical axis if image taken at 90 degrees position
+  if (annotations$Rotation[i] == 90) {
+    image_matrix <- image_matrix[, ncol(image_matrix):1]
+  }
+
+  # Intialise vector of x offsets
+  best_x_offsets <- numeric()
+
+  # Extract rows of pixel values
+  row_differences <- sum(abs(image_matrix[x, ] - image_matrix[x - 1, ]))
+
+  # Align rows to give a single vector for the image
+
+  # Trim off area corresponding to the transwell wall
+
+  # Subtract background by using minimal intenstiy values
+
+  # Model curve
+
+  # calculate area under the curve
+}
 ```
-
-
-# Convert to grey-scale image
-
-# Extract rows of pixel values
-
-# Align rows to give a single vector for the image
-
-# Trim off area corresponding to the transwell wall
-
-# Subtract background by using minimal intenstiy values
-
-# Model curve
-
-# calculate area under the curve
