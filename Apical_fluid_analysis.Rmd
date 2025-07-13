@@ -24,7 +24,8 @@ output_dir <- paste0(getwd(), "/results/")
 annotations_file <- "annotations.tsv"
 
 # User variables
-max_x_offset <- 80
+min_offset <- -20
+max_offset <- 80
 magnification <- "4x" # "10X"
 wash <- "post wash" # "pre wash"
 
