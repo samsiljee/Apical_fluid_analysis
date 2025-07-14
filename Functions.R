@@ -14,7 +14,7 @@ get_alignment_offsets <- function(image_matrix, min_offset, max_offset) {
   best_offsets <- numeric()
 
   # Loop through rows
-  for (x in n_rows) {
+  for (x in 1:n_rows) {
     # Initialise offset score for this row
     best_score <- Inf
 
@@ -33,8 +33,8 @@ get_alignment_offsets <- function(image_matrix, min_offset, max_offset) {
       }
     }
 
-    # Store minimum score in the minimum offsets vector
-    best_offsets[x] <- minimum_index
+    # Add minimum score in the minimum offsets vector
+    best_offsets <- c(best_offsets, minimum_index)
   }
   
   # return the results
@@ -71,4 +71,55 @@ score_alignment <- function(image_row, reference_row, x_offset) {
 
   # Return the mean absolute differences
   return(mean(abs(trimmed_reference_row - offset_row)))
+}
+
+# Function to align a matrix given an image matrix and set of offset values
+align_matrix <- function(image_matrix, offsets) {
+  # Set some values
+  min_offset <- min(offsets)
+  max_offset <- max(offsets)
+  offset_difference <- abs(min_offset) + abs(max_offset)
+  original_width <- ncol(image_matrix)
+  
+  # Calculate new width given offset values
+  new_width <- original_width - offset_difference
+  
+  # Intialise new matrix
+  aligned_matrix <- matrix(nrow = nrow(image_matrix), ncol = new_width)
+  
+  # Loop through rows
+  for(x in 1:nrow(image_matrix)) {
+    # Get offset value for that row
+    offset_value <- offsets[x]
+    
+    # Get original row
+    original_row <- image_matrix[x,]
+    
+    if(offset_value > 0) { # Positive offset
+      # Take the shifted portion of the original row
+      new_row <- original_row[(offset_value + 1):(offset_value + new_width)]
+      
+    } else if(offset_value < 0) { # Negative offset
+      # Create new row with leading zeros, then add the original data
+      new_row <- rep(0, new_width)
+      new_row[(abs(offset_value) + 1):new_width] <- original_row[1:(new_width - abs(offset_value))]
+      
+    } else { # No offset
+      # Take the middle portion of the original row
+      start_col <- abs(min_offset) + 1
+      new_row <- original_row[start_col:(start_col + new_width - 1)]
+    }
+    
+    # Add the new row to the aligned matrix
+    aligned_matrix[x,] <- new_row
+  }
+  
+  # Return the aligned matrix
+  return(aligned_matrix)
+}
+
+# Function to normalise the image for .png export
+normalise_image <- function(input_matrix) {
+  normalised_matrix <- (input_matrix - min(input_matrix)) / (max(input_matrix) - min(input_matrix))
+  return(normalised_matrix)
 }
