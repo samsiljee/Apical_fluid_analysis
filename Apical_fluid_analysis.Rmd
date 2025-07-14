@@ -17,6 +17,7 @@ library(dplyr) # Data manipulation
 library(ggplot2) # Plotting
 library(stringr) # String manipulation in annotations
 library(tiff) # Read in .tiff files
+library(png) # Write .png images
 
 # Files and directories
 input_dir <- paste0(getwd(), "/data/")
@@ -24,8 +25,8 @@ output_dir <- paste0(getwd(), "/results/")
 annotations_file <- "annotations.tsv"
 
 # User variables
-min_offset <- -20
-max_offset <- 80
+min_offset <- -90
+max_offset <-5
 magnification <- "4x" # "10X"
 wash <- "post wash" # "pre wash"
 
@@ -60,25 +61,52 @@ for (i in 1:nrow(annotations)) {
   # Set some variables
   file_name <- annotations$file_name[i]
   ID <- annotations$ID[i]
+  
+  # Print progress check
+  print(paste0("Starting on ", ID, ", ", i, " of ", nrow(annotations)))
 
   # Load the image
   image_matrix <- readTIFF(paste0(input_dir, file_name), as.is = TRUE)
 
   # Convert to grey-scale image - sum all channels
   image_matrix <- image_matrix[, , 1] + image_matrix[, , 2] + image_matrix[, , 3]
+  
+  # Get number of rows for other functions
+  image_height <- nrow(image_matrix)
 
   # Flip on vertical axis if image taken at 90 degrees position
   if (annotations$Rotation[i] == 90) {
     image_matrix <- image_matrix[, ncol(image_matrix):1]
   }
 
-  # Intialise vector of x offsets
-  best_x_offsets <- numeric()
+  # Run function to identify best offsets
+  best_offsets <- get_alignment_offsets(image_matrix, min_offset, max_offset)
+  
+  # Plot best offsets
+  data.frame(Row = 1:image_height, Offset = best_offsets) %>%
+    ggplot(aes(x = Row, y = Offset)) +
+    geom_line() +
+    labs(
+      title = paste("Calcualted offset values for image ", ID),
+      x = "Image row",
+      y = "Row offset value"
+    ) +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+      legend.position = "none"
+    )
+  
+  # Save the plot
+  ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
 
-  # Extract rows of pixel values
-  row_differences <- sum(abs(image_matrix[x, ] - image_matrix[x - 1, ]))
-
-  # Align rows to give a single vector for the image
+  # Align rows, saving an image of the aligned matrix and make a column means vector
+  aligned_matrix <- align_matrix(image_matrix, best_offsets)
+  
+   # Save as a PNG image - grayscale
+  writePNG(normalise_image(aligned_matrix), paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
+  
+  intensity_vector <- colMeans(aligned_matrix)
 
   # Trim off area corresponding to the transwell wall
 
