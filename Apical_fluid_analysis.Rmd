@@ -86,6 +86,7 @@ for (i in 1:nrow(annotations)) {
   data.frame(Row = 1:image_height, Offset = best_offsets) %>%
     ggplot(aes(x = Row, y = Offset)) +
     geom_line() +
+    coord_flip() +
     labs(
       title = paste("Calcualted offset values for image ", ID),
       x = "Image row",
@@ -124,7 +125,7 @@ for (i in 1:nrow(annotations)) {
     )
   
   # Save the plot
-  ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
+  ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
   
   # Trim off area corresponding to the transwell wall
 
