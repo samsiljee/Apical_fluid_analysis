@@ -101,13 +101,31 @@ for (i in 1:nrow(annotations)) {
   ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
 
   # Align rows, saving an image of the aligned matrix and make a column means vector
-  aligned_matrix <- align_matrix(image_matrix, best_offsets)
+  aligned_matrix <- align_matrix(image_matrix, -best_offsets)
   
    # Save as a PNG image - grayscale
   writePNG(normalise_image(aligned_matrix), paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
   
   intensity_vector <- colMeans(aligned_matrix)
 
+  # Make a plot of the intensity values
+  data.frame(Column = 1:length(intensity_vector), Intensity = intensity_vector) %>%
+    ggplot(aes(x = Column, y = Intensity)) +
+    geom_line() +
+    labs(
+      title = paste("Aligned column mean intensity:", ID),
+      x = "Image column",
+      y = "Mean intensity"
+    ) +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+      legend.position = "none"
+    )
+  
+  # Save the plot
+  ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
+  
   # Trim off area corresponding to the transwell wall
 
   # Subtract background by using minimal intenstiy values
