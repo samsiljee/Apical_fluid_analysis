@@ -78,40 +78,21 @@ align_matrix <- function(image_matrix, offsets) {
   # Set some values
   min_offset <- min(offsets)
   max_offset <- max(offsets)
-  offset_difference <- abs(min_offset) + abs(max_offset)
-  original_width <- ncol(image_matrix)
   
   # Calculate new width given offset values
-  new_width <- original_width - offset_difference
+  new_width <- ncol(image_matrix) - (max_offset - min_offset)
   
   # Intialise new matrix
   aligned_matrix <- matrix(nrow = nrow(image_matrix), ncol = new_width)
   
   # Loop through rows
   for(x in 1:nrow(image_matrix)) {
-    # Get offset value for that row
-    offset_value <- offsets[x]
+    # Calculate start position in original matrix for this row
+    start_col <- abs(min_offset) + offsets[x] + 1
+    end_col <- start_col + new_width - 1
     
-    # Get original row
-    original_row <- image_matrix[x,]
-    
-    if(offset_value > 0) { # Positive offset
-      # Take the shifted portion of the original row
-      new_row <- original_row[(offset_value + 1):(offset_value + new_width)]
-      
-    } else if(offset_value < 0) { # Negative offset
-      # Create new row with leading zeros, then add the original data
-      new_row <- rep(0, new_width)
-      new_row[(abs(offset_value) + 1):new_width] <- original_row[1:(new_width - abs(offset_value))]
-      
-    } else { # No offset
-      # Take the middle portion of the original row
-      start_col <- abs(min_offset) + 1
-      new_row <- original_row[start_col:(start_col + new_width - 1)]
-    }
-    
-    # Add the new row to the aligned matrix
-    aligned_matrix[x,] <- new_row
+    # Extract the section from original matrix
+    aligned_matrix[x,] <- image_matrix[x, start_col:end_col]
   }
   
   # Return the aligned matrix
