@@ -127,6 +127,7 @@ for (i in 1:nrow(annotations)) {
     ggplot(aes(x = Column, y = Intensity)) +
     geom_line() +
     geom_vline(xintercept = intensity_cutoff, col = "red") +
+    scale_y_reverse() +
     labs(
       title = paste("Aligned column mean intensity:", ID),
       x = "Image column",
