@@ -64,6 +64,9 @@ for (i in 1:nrow(annotations)) {
   file_name <- annotations$file_name[i]
   ID <- annotations$ID[i]
   
+  # Get manual intensity cutoff value
+  intensity_cutoff <- intensity_cutoffs[intensity_cutoffs$ID == ID, 2]
+  
   # Print progress check
   print(paste0("Starting on ", ID, ", ", i, " of ", nrow(annotations)))
 
@@ -106,14 +109,18 @@ for (i in 1:nrow(annotations)) {
   # Align rows, saving an image of the aligned matrix and make a column means vector
   aligned_matrix <- align_matrix(image_matrix, -best_offsets)
   
-   # Save as a PNG image - grayscale
-  writePNG(normalise_image(aligned_matrix), paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
+  # Make an image with a red line for the intensity cutoff
+  aligned_image <- array(dim = c(dim(aligned_matrix), 3))
+  aligned_image[,,1:3] <- normalise_image(aligned_matrix) # All three channels the same
+  # Add in red line
+  aligned_image[,(intensity_cutoff - 2) : (intensity_cutoff + 2),1] <- 1
+  aligned_image[,(intensity_cutoff - 2) : (intensity_cutoff + 2),2:3] <- 0
+  
+  # Save as a PNG image - grayscale
+  writePNG(aligned_image, paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
   
   # Get intensity values
   intensity_vector <- colMeans(aligned_matrix)
-  
-  # Get manual intensity cutoff value
-  intensity_cutoff <- intensity_cutoffs[intensity_cutoffs$ID == ID, 2]
 
   # Make a plot of the intensity values
   data.frame(Column = 1:length(intensity_vector), Intensity = intensity_vector) %>%
@@ -135,6 +142,7 @@ for (i in 1:nrow(annotations)) {
   ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
   
   # Trim off area corresponding to the transwell wall
+  intensity_vector <- intensity_vector[intensity_cutoff:length(intensity_vector)]
 
   # Subtract background by using minimal intenstiy values
 
