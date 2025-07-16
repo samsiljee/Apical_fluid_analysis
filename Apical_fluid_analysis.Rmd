@@ -22,13 +22,12 @@ library(png) # Write .png images
 # Files and directories
 input_dir <- paste0(getwd(), "/data/")
 output_dir <- paste0(getwd(), "/results/")
-annotations_file <- "annotations.tsv"
 
 # User variables
 min_offset <- -90
 max_offset <-5
 magnification <- "4x" # "10X"
-wash <- "post wash" # "pre wash"
+wash <- "post" # "pre wash"
 
 # Load custom functions
 source("Functions.R")
@@ -52,6 +51,9 @@ annotations <- data.frame(file_name = input_files) %>%
     ID = paste(Donor, Well, Rotation, sep = "_"),
     Condition = ifelse(Well %in% c(1, 2, 3), "Control", "p53 KD")
   )
+
+# Read in intensity curve cutoffs
+intensity_cutoffs <- read.csv(paste0(input_dir, "curve_cutoffs_", magnification, "_", wash,"_wash.csv"), header = TRUE)
 
 # Initialise list for results
 area_results <- list()
@@ -107,12 +109,17 @@ for (i in 1:nrow(annotations)) {
    # Save as a PNG image - grayscale
   writePNG(normalise_image(aligned_matrix), paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
   
+  # Get intensity values
   intensity_vector <- colMeans(aligned_matrix)
+  
+  # Get manual intensity cutoff value
+  intensity_cutoff <- intensity_cutoffs[intensity_cutoffs$ID == ID, 2]
 
   # Make a plot of the intensity values
   data.frame(Column = 1:length(intensity_vector), Intensity = intensity_vector) %>%
     ggplot(aes(x = Column, y = Intensity)) +
     geom_line() +
+    geom_vline(xintercept = intensity_cutoff, col = "red") +
     labs(
       title = paste("Aligned column mean intensity:", ID),
       x = "Image column",
