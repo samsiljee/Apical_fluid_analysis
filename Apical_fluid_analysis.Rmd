@@ -18,6 +18,7 @@ library(ggplot2) # Plotting
 library(stringr) # String manipulation in annotations
 library(tiff) # Read in .tiff files
 library(png) # Write .png images
+library(drc) # For 4PL model
 
 # Files and directories
 input_dir <- paste0(getwd(), "/data/")
@@ -122,15 +123,34 @@ for (i in 1:nrow(annotations)) {
   # Get intensity values
   intensity_vector <- colMeans(aligned_matrix)
 
+  # Fit 4PL curve model with data trimmed by manual intensity cutoff
+  model_data <- data.frame(
+    Intensity = intensity_vector[intensity_cutoff:length(intensity_vector)],
+    Radial_distance = 1:length(intensity_vector[intensity_cutoff:length(intensity_vector)])
+    )
+  
+  fit <- drm(Intensity ~ Radial_distance, data = model_data, fct = LL.3())
+  
+  # View the summary of the fitted curve
+  summary(fit)
+  
+  # Predict concentrations of samples
+  predicted_fit <- predict(fit, newdata = as.data.frame(model_data$Radial_distance))
+  
   # Make a plot of the intensity values
-  data.frame(Column = 1:length(intensity_vector), Intensity = intensity_vector) %>%
-    ggplot(aes(x = Column, y = Intensity)) +
+  data.frame(
+    Radial_distance = 1:length(intensity_vector),
+    Intensity = intensity_vector,
+    Model = c(rep(NA, intensity_cutoff - 1), predicted_fit)
+  ) %>%
+    ggplot(aes(x = Radial_distance, y = Intensity)) +
     geom_line() +
+    geom_line(aes(x = Radial_distance, y = Model), col = "blue") +
     geom_vline(xintercept = intensity_cutoff, col = "red") +
     scale_y_reverse() +
     labs(
       title = paste("Aligned column mean intensity:", ID),
-      x = "Image column",
+      x = "Radial distance (pixels)",
       y = "Mean intensity"
     ) +
     theme_bw() +
@@ -141,13 +161,6 @@ for (i in 1:nrow(annotations)) {
   
   # Save the plot
   ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
-  
-  # Trim off area corresponding to the transwell wall
-  intensity_vector <- intensity_vector[intensity_cutoff:length(intensity_vector)]
-
-  # Subtract background by using minimal intenstiy values
-
-  # Model curve
 
   # calculate area under the curve
 }
