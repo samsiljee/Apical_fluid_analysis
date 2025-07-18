@@ -85,7 +85,7 @@ align_matrix <- function(image_matrix, offsets) {
   # Loop through rows
   for(x in 1:nrow(image_matrix)) {
     # Calculate start position in original matrix for this row
-    start_col <- abs(min_offset) + offsets[x] + 1
+    start_col <- offsets[x] - min_offset + 1
     end_col <- start_col + new_width - 1
     
     # Extract the section from original matrix
