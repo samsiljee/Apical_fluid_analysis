@@ -194,4 +194,7 @@ for (i in 1:nrow(annotations)) {
     "4PL_area" = 0
   )
 }
+
+# Save the resulting area data
+save(area_results, file = paste0(output_dir, "area_results.rda"))
 ```
