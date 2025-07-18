@@ -101,7 +101,7 @@ for (i in 1:nrow(annotations)) {
   rbind(
     data.frame(
       Row = 1:image_height,
-      Offset = offest_estimates,
+      Offset = offset_estimates,
       Method = "Image alignment"),
     data.frame(
       Row = 1:image_height,
