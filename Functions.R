@@ -3,12 +3,9 @@
 # 27th June 2025
 
 # Function to get matrix offset values
-get_alignment_offsets <- function(image_matrix, min_offset, max_offset) {
+get_alignment_offsets <- function(image_matrix, reference_row, min_offset, max_offset) {
   # Set some variables
   n_rows <- nrow(image_matrix)
-
-  # Take the average of the middle fifth as a reference row
-  reference_row <- colMeans(image_matrix[floor(n_rows * 2 / 5):ceiling(n_rows * 3 / 5), ])
 
   # Initialise vector for offset results
   best_offsets <- numeric()
