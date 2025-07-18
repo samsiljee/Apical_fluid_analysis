@@ -26,7 +26,7 @@ output_dir <- paste0(getwd(), "/results/")
 
 # User variables
 min_offset <- -90
-max_offset <-5
+max_offset <- 5
 magnification <- "4x" # "10X"
 wash <- "post" # "pre wash"
 
@@ -54,7 +54,7 @@ annotations <- data.frame(file_name = input_files) %>%
   )
 
 # Read in intensity curve cutoffs
-intensity_cutoffs <- read.csv(paste0(input_dir, "curve_cutoffs_", magnification, "_", wash,"_wash.csv"), header = TRUE)
+intensity_cutoffs <- read.csv(paste0(input_dir, "curve_cutoffs_", magnification, "_", wash, "_wash.csv"), header = TRUE)
 
 # Initialise list for results
 area_results <- list()
@@ -64,10 +64,10 @@ for (i in 1:nrow(annotations)) {
   # Set some variables
   file_name <- annotations$file_name[i]
   ID <- annotations$ID[i]
-  
+
   # Get manual intensity cutoff value
   intensity_cutoff <- intensity_cutoffs[intensity_cutoffs$ID == ID, 2]
-  
+
   # Print progress check
   print(paste0("Starting on ", ID, ", ", i, " of ", nrow(annotations)))
 
@@ -76,7 +76,7 @@ for (i in 1:nrow(annotations)) {
 
   # Convert to grey-scale image - sum all channels
   image_matrix <- image_matrix[, , 1] + image_matrix[, , 2] + image_matrix[, , 3]
-  
+
   # Get number of rows for other functions
   image_height <- nrow(image_matrix)
 
@@ -90,23 +90,25 @@ for (i in 1:nrow(annotations)) {
 
   # Run function to estimate best offsets
   offset_estimates <- get_alignment_offsets(image_matrix, reference_row, min_offset, max_offset)
-  
+
   # Run quadratic model to estimate offset curve
   offset_model <- lm(offset ~ poly(row, 2), data = data.frame(row = 1:image_height, offset = offset_estimates))
-  
+
   # Model the offsets
   offsets <- predict(offset_model, newdata = data.frame(row = 1:image_height))
-  
+
   # Plot the offsets
   rbind(
     data.frame(
       Row = 1:image_height,
       Offset = offset_estimates,
-      Method = "Image alignment"),
+      Method = "Image alignment"
+    ),
     data.frame(
       Row = 1:image_height,
       Offset = offsets,
-      Method = "Quadratic model")
+      Method = "Quadratic model"
+    )
   ) %>%
     ggplot(aes(x = Row, y = Offset, col = Method)) +
     geom_line() +
@@ -120,23 +122,23 @@ for (i in 1:nrow(annotations)) {
     theme(
       axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
     )
-  
+
   # Save the plot
   ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
 
   # Align rows, saving an image of the aligned matrix and make a column means vector
   aligned_matrix <- align_matrix(image_matrix, -offsets)
-  
+
   # Make an image with a red line for the intensity cutoff
   aligned_image <- array(dim = c(dim(aligned_matrix), 3))
-  aligned_image[,,1:3] <- normalise_image(aligned_matrix) # All three channels the same
+  aligned_image[, , 1:3] <- normalise_image(aligned_matrix) # All three channels the same
   # Add in red line
-  aligned_image[,(intensity_cutoff - 2) : (intensity_cutoff + 2),1] <- 1
-  aligned_image[,(intensity_cutoff - 2) : (intensity_cutoff + 2),2:3] <- 0
-  
+  aligned_image[, (intensity_cutoff - 2):(intensity_cutoff + 2), 1] <- 1
+  aligned_image[, (intensity_cutoff - 2):(intensity_cutoff + 2), 2:3] <- 0
+
   # Save as a PNG image - grayscale
   writePNG(aligned_image, paste0(output_dir, "aligned_images/", ID, "_aligned_image.png"))
-  
+
   # Get intensity values
   intensity_vector <- colMeans(aligned_matrix)
 
@@ -144,16 +146,16 @@ for (i in 1:nrow(annotations)) {
   model_data <- data.frame(
     Intensity = intensity_vector[intensity_cutoff:length(intensity_vector)],
     Radial_distance = 1:length(intensity_vector[intensity_cutoff:length(intensity_vector)])
-    )
-  
+  )
+
   fit <- drm(Intensity ~ Radial_distance, data = model_data, fct = LL.3())
-  
+
   # View the summary of the fitted curve
   summary(fit)
-  
+
   # Predict concentrations of samples
   predicted_fit <- predict(fit, newdata = as.data.frame(model_data$Radial_distance))
-  
+
   # Make a plot of the intensity values
   data.frame(
     Radial_distance = 1:length(intensity_vector),
@@ -175,7 +177,7 @@ for (i in 1:nrow(annotations)) {
       axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
       legend.position = "none"
     )
-  
+
   # Save the plot
   ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
 
