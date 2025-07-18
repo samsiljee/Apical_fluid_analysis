@@ -139,23 +139,23 @@ for (i in 1:nrow(annotations)) {
   
   # Get intensity values
   intensity_vector <- colMeans(aligned_matrix)
+  
+  # Trim by manual cutoff
+  trimmed_intensity <- intensity_vector[intensity_cutoff:length(intensity_vector)]
 
   # Fit 4PL curve model with data trimmed by manual intensity cutoff
   model_data <- data.frame(
-    Intensity = intensity_vector[intensity_cutoff:length(intensity_vector)],
-    Radial_distance = 1:length(intensity_vector[intensity_cutoff:length(intensity_vector)])
+    Intensity = trimmed_intensity,
+    Radial_distance = 1:length(trimmed_intensity)
     )
   
   fit <- drm(Intensity ~ Radial_distance, data = model_data, fct = LL.3())
-  
-  # View the summary of the fitted curve
-  summary(fit)
   
   # Predict concentrations of samples
   predicted_fit <- predict(fit, newdata = as.data.frame(model_data$Radial_distance))
   
   # Calculate intensity cutoff as per Harvey et. al. method - where intensity is at its maximum.
-  Harvey_intesity_cutoff <- which.max(intensity_vector)
+  Harvey_intensity_cutoff <- which.min(intensity_vector)
   
   # Make a plot of the intensity values
   data.frame(
@@ -167,7 +167,7 @@ for (i in 1:nrow(annotations)) {
     geom_line() +
     geom_line(aes(x = Radial_distance, y = Model), col = "darkgreen") +
     geom_vline(xintercept = intensity_cutoff, col = "red") +
-    geom_vline(xintercept = Harvey_intesity_cutoff, col = "blue")
+    geom_vline(xintercept = Harvey_intensity_cutoff, col = "blue") +
     scale_y_reverse() +
     labs(
       title = paste("Aligned column mean intensity:", ID),
@@ -183,6 +183,15 @@ for (i in 1:nrow(annotations)) {
   # Save the plot
   ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
 
-  # calculate area under the curve
+  # calculate area under the curve according to the 4PL model
+  
+  # Calculate the area under the curve by adding the intensity values - inverted for greyscale mapping
+  sum_area <- sum(max(trimmed_intensity) - trimmed_intensity)
+  
+  # Add to results list
+  area_results[[ID]] <- c(
+    "sum_area" = sum_area,
+    "4PL_area" = 0
+  )
 }
 ```
