@@ -85,12 +85,30 @@ for (i in 1:nrow(annotations)) {
     image_matrix <- image_matrix[, ncol(image_matrix):1]
   }
 
-  # Run function to identify best offsets
-  best_offsets <- get_alignment_offsets(image_matrix, min_offset, max_offset)
+  # Take the average of the middle fifth as a reference row
+  reference_row <- colMeans(image_matrix[floor(nrow(image_matrix) * 2 / 5):ceiling(nrow(image_matrix) * 3 / 5), ])
+
+  # Run function to estimate best offsets
+  offset_estimates <- get_alignment_offsets(image_matrix, reference_row, min_offset, max_offset)
   
-  # Plot best offsets
-  data.frame(Row = 1:image_height, Offset = best_offsets) %>%
-    ggplot(aes(x = Row, y = Offset)) +
+  # Run quadratic model to estimate offset curve
+  offset_model <- lm(offset ~ poly(row, 2), data = data.frame(row = 1:image_height, offset = offset_estimates))
+  
+  # Model the offsets
+  offsets <- predict(offset_model, newdata = data.frame(row = 1:image_height))
+  
+  # Plot the offsets
+  rbind(
+    data.frame(
+      Row = 1:image_height,
+      Offset = offest_estimates,
+      Method = "Image alignment"),
+    data.frame(
+      Row = 1:image_height,
+      Offset = offsets,
+      Method = "Quadratic model")
+  ) %>%
+    ggplot(aes(x = Row, y = Offset, col = Method)) +
     geom_line() +
     coord_flip() +
     labs(
@@ -100,15 +118,14 @@ for (i in 1:nrow(annotations)) {
     ) +
     theme_bw() +
     theme(
-      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-      legend.position = "none"
+      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
     )
   
   # Save the plot
   ggsave(paste0(output_dir, "offset_plots/", ID, "_offset_plot.png"), width = 8, height = 5.5)
 
   # Align rows, saving an image of the aligned matrix and make a column means vector
-  aligned_matrix <- align_matrix(image_matrix, -best_offsets)
+  aligned_matrix <- align_matrix(image_matrix, -offsets)
   
   # Make an image with a red line for the intensity cutoff
   aligned_image <- array(dim = c(dim(aligned_matrix), 3))
