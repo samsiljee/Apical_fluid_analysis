@@ -57,7 +57,7 @@ annotations <- data.frame(file_name = input_files) %>%
 intensity_cutoffs <- read.csv(paste0(input_dir, "curve_cutoffs_", magnification, "_", wash,"_wash.csv"), header = TRUE)
 
 # Initialise list for results
-area_results <- list()
+results <- list()
 
 # Start loop through images
 for (i in 1:nrow(annotations)) {
@@ -183,18 +183,26 @@ for (i in 1:nrow(annotations)) {
   # Save the plot
   ggsave(paste0(output_dir, "intensity_plots/", ID, "_intensity_plot.png"), width = 8, height = 5.5)
 
-  # calculate area under the curve according to the 4PL model
+  # calculate area under the curve according to the 4PL model using numerical integration
+  sigmoid_func <- function(x) {
+    predict(fit, newdata = data.frame(Radial_distance = x))
+  }
+  
+  # Calculate area under curve
+  sigmoid_area <- integrate(sigmoid_func, lower = 0, upper = 2000)
   
   # Calculate the area under the curve by adding the intensity values - inverted for greyscale mapping
   sum_area <- sum(max(trimmed_intensity) - trimmed_intensity)
   
   # Add to results list
-  area_results[[ID]] <- c(
+  results[[ID]] <- list(
     "sum_area" = sum_area,
-    "4PL_area" = 0
+    "sigmoid_area" = sigmoid_area$value,
+    "sigmoid_model" = fit,
+    "quadratic_model" = offset_model
   )
 }
 
 # Save the resulting area data
-save(area_results, file = paste0(output_dir, "area_results.rda"))
+save(results, file = paste0(output_dir, magnification, "_", wash, "_results.rda"))
 ```
