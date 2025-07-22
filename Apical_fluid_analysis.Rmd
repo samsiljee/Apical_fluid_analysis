@@ -169,7 +169,7 @@ for (i in 1:nrow(annotations)) {
   fit <- drm(Intensity ~ Radial_distance, data = model_data, fct = LL.3())
   
   # Predict concentrations of samples
-  predicted_fit <- predict(fit, newdata = as.data.frame(model_data$Radial_distance))
+  predicted_fit <- predict(fit, newdata = data.frame(Radial_distance = 1:length(trimmed_intensity)))
   
   # Calculate intensity cutoff as per Harvey et. al. method - where intensity is at its maximum.
   Max_intensity_cutoff <- which.min(intensity_vector)
