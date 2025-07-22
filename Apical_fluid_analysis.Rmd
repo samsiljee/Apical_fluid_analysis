@@ -148,11 +148,22 @@ for (i in 1:nrow(annotations)) {
   
   # Trim by manual cutoff
   trimmed_intensity <- intensity_vector[intensity_cutoff:length(intensity_vector)]
+  
+  # Get intensity values for model - including exceptions for pre-wash 4x samples 21-052_1_270 and 22-069_6_270
+  model_trimmed_intensity <- if (magnification == "10x" | wash == "post") {
+    trimmed_intensity
+  } else if (ID == "21-052_1_270") {
+    intensity_vector[273:length(intensity_vector)]
+  } else if (ID == "22-069_6_270") {
+    intensity_vector[337:length(intensity_vector)]
+  } else {
+    trimmed_intensity
+  }
 
   # Fit 4PL curve model with data trimmed by manual intensity cutoff
   model_data <- data.frame(
-    Intensity = trimmed_intensity,
-    Radial_distance = 1:length(trimmed_intensity)
+    Intensity = model_trimmed_intensity,
+    Radial_distance = 1:length(model_trimmed_intensity)
     )
   
   fit <- drm(Intensity ~ Radial_distance, data = model_data, fct = LL.3())
@@ -161,7 +172,7 @@ for (i in 1:nrow(annotations)) {
   predicted_fit <- predict(fit, newdata = as.data.frame(model_data$Radial_distance))
   
   # Calculate intensity cutoff as per Harvey et. al. method - where intensity is at its maximum.
-  Harvey_intensity_cutoff <- which.min(intensity_vector)
+  Max_intensity_cutoff <- which.min(intensity_vector)
   
   # Make a plot of the intensity values
   data.frame(
@@ -173,7 +184,7 @@ for (i in 1:nrow(annotations)) {
     geom_line() +
     geom_line(aes(x = Radial_distance, y = Model), col = "darkgreen") +
     geom_vline(xintercept = intensity_cutoff, col = "red") +
-    geom_vline(xintercept = Harvey_intensity_cutoff, col = "blue") +
+    geom_vline(xintercept = Max_intensity_cutoff, col = "blue") +
     scale_y_reverse() +
     labs(
       title = paste("Aligned column mean intensity:", ID),
