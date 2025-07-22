@@ -9,6 +9,12 @@ date: '2022-09-06'
 output: html_document
 ---
 
+Note that I've had to change two intensity threshold values for the pre-wash 4x data. These values caused convergence to fail when fitting the sigmoid function to the fail to converge.
+The values I've changed are
+21-052_1_270 from 297 to 273
+and
+22-069_6_270 from 362 to 337
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -28,7 +34,7 @@ output_dir <- paste0(getwd(), "/results/")
 min_offset <- -90
 max_offset <-5
 magnification <- "4x" # "10X"
-wash <- "post" # "pre wash"
+wash <- "pre" # "pre wash"
 
 # Load custom functions
 source("Functions.R")
