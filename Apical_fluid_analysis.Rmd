@@ -162,7 +162,7 @@ for (i in 1:nrow(annotations)) {
 
   # Fit 4PL curve model with data trimmed by manual intensity cutoff
   model_data <- data.frame(
-    Intensity = model_trimmed_intensity,
+    Intensity = max(model_trimmed_intensity) - model_trimmed_intensity,
     Radial_distance = 1:length(model_trimmed_intensity)
     )
   
