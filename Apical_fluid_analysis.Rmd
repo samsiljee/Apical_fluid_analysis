@@ -178,7 +178,7 @@ for (i in 1:nrow(annotations)) {
   data.frame(
     Radial_distance = 1:length(intensity_vector),
     Intensity = intensity_vector,
-    Model = c(rep(NA, intensity_cutoff - 1), predicted_fit)
+    Model = c(rep(NA, intensity_cutoff - 1), max(trimmed_intensity) - predicted_fit)
   ) %>%
     ggplot(aes(x = Radial_distance, y = Intensity)) +
     geom_line() +
